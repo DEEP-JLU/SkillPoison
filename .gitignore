@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.env
+*.env
+data/
+outputs/
+runs/
+logs/
+third_party/
+*.parquet
+*.jsonl
+.venv/
+venv/
+.env
+.venv/
+__pycache__/
+*.pyc

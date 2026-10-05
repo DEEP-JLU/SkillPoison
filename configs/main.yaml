@@ -1,0 +1,20 @@
+run:
+  output_dir: outputs/run
+model:
+  name: deepseek-v4-flash
+  temperature: 0.3
+  max_retries: 3
+target_behavior:
+  statement: Predict paraphrase when the two sentences contain identical content-word sets
+embedding:
+  model: sentence-transformers/all-MiniLM-L6-v2
+  normalize: true
+hts:
+  tau_R: 0
+  tau_O: 1.0
+legsa:
+  prompts_dir: prompts/legsa
+gctir:
+  retained_categories: 3
+  formation_budget: 15
+  require_exact_budget: true

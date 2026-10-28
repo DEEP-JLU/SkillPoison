@@ -35,19 +35,18 @@ def _tokens(outcome: Outcome) -> list[str]:
     return _TOKEN_PATTERN.findall(outcome.text)
 
 
-def _longest_common_subsequence_length(left: list[str], right: list[str]) -> int:
-    previous = [0] * (len(right) + 1)
-    for x in left:
-        current = [0]
-        for index, y in enumerate(right, start=1):
-            current.append(previous[index - 1] + 1 if x == y else max(previous[index], current[index - 1]))
-        previous = current
-    return previous[-1]
-
-
 def compute_edit_distance(original: Outcome, counterfactual: Outcome) -> int:
     left, right = _tokens(original), _tokens(counterfactual)
-    return max(len(left), len(right)) - _longest_common_subsequence_length(left, right)
+    if len(left) < len(right):
+        left, right = right, left
+    previous = list(range(len(right) + 1))
+    for i, x in enumerate(left, start=1):
+        current = [i]
+        for j, y in enumerate(right, start=1):
+            current.append(min(previous[j] + 1, current[j - 1] + 1,
+                               previous[j - 1] + (x != y)))
+        previous = current
+    return previous[-1]
 
 
 def outcome_from_trajectory(trajectory: dict) -> Outcome:

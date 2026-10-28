@@ -7,17 +7,17 @@ from pathlib import Path
 
 import yaml
 
-from core.gctir.embedding import DEFAULT_EMBEDDING_MODEL, SemanticEmbedder
+from core.ceir.embedding import DEFAULT_EMBEDDING_MODEL, SemanticEmbedder
 from core.utils.llm import LLMClient
 
 DEFAULT_CONFIG = {
     "run": {"output_dir": "outputs/run"},
-    "model": {"name": "deepseek-v4-flash", "temperature": 0.0, "model_env": "MODEL_NAME", "base_url_env": "MODEL_BASE_URL", "api_key_env": "MODEL_API_KEY", "max_retries": 3},
+    "model": {"name": "deepseek-v4-flash", "temperature": 0.3, "model_env": "MODEL_NAME", "base_url_env": "MODEL_BASE_URL", "api_key_env": "MODEL_API_KEY", "max_retries": 3},
     "target_behavior": {"statement": ""},
     "embedding": {"model": DEFAULT_EMBEDDING_MODEL, "normalize": True},
     "hts": {"tau_R": 0.5, "tau_O": 1.0},
-    "legsa": {"prompts_dir": "prompts/legsa"},
-    "gctir": {"lambda": 0.5, "retained_categories": 3, "formation_budget": 15, "require_exact_budget": True},
+    "lega": {"prompts_dir": "prompts/lega"},
+    "ceir": {"lambda": 0.5, "retained_categories": 3, "formation_budget": 15, "require_exact_budget": True},
 }
 
 
@@ -34,21 +34,27 @@ def load_config(path: str | Path) -> dict:
         raise ValueError("configuration must be a mapping")
     config = _merge(DEFAULT_CONFIG, supplied)
     if "seed" in config["run"]:
-        raise ValueError("run.seed is not supported; core record selection uses fixed input order")
+        raise ValueError("run.seed is not supported; selection uses descending importance, with input order for ties")
     statement = config["target_behavior"].get("statement")
     if not isinstance(statement, str) or not statement.strip():
         raise ValueError("target_behavior.statement is required")
-    for section, key in (("hts", "tau_R"), ("hts", "tau_O"), ("gctir", "lambda")):
+    for section, key in (("hts", "tau_R"), ("hts", "tau_O"), ("ceir", "lambda")):
         value = config[section][key]
         if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1:
             raise ValueError(f"{section}.{key} must be in [0, 1]")
     for key in ("formation_budget", "retained_categories"):
-        value = config["gctir"][key]
+        value = config["ceir"][key]
         if type(value) is not int or value <= 0:
-            raise ValueError(f"gctir.{key} must be a positive integer")
-    for value in (config["gctir"]["require_exact_budget"], config["embedding"]["normalize"]):
+            raise ValueError(f"ceir.{key} must be a positive integer")
+    for value in (config["ceir"]["require_exact_budget"], config["embedding"]["normalize"]):
         if type(value) is not bool:
             raise ValueError("budget and normalization switches must be Boolean")
+    model = config["model"]
+    if type(model["max_retries"]) is not int or model["max_retries"] <= 0:
+        raise ValueError("model.max_retries must be a positive integer")
+    temperature = model["temperature"]
+    if type(temperature) not in (int, float) or not math.isfinite(temperature) or not 0 <= temperature <= 2:
+        raise ValueError("model.temperature must be in [0, 2]")
     return config
 
 

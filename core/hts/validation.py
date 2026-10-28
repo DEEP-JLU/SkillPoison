@@ -129,5 +129,3 @@ def validate_counterfactual(experience: dict, counterfactual: dict, audit: dict)
     quote = audit.get("alternative_evidence_quote")
     if not isinstance(quote, str) or not quote.strip() or quote not in render_trajectory(counterfactual):
         raise ValueError("counterfactual audit requires quoted evidence of the alternative")
-    if outcome_from_trajectory(original).text == outcome_from_trajectory(counterfactual).text:
-        raise ValueError("counterfactual does not change the recorded outcome")

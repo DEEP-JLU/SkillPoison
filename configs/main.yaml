@@ -12,9 +12,10 @@ embedding:
 hts:
   tau_R: 0
   tau_O: 1.0
-legsa:
-  prompts_dir: prompts/legsa
-gctir:
+lega:
+  prompts_dir: prompts/lega
+ceir:
+  lambda: 0.5
   retained_categories: 3
   formation_budget: 15
   require_exact_budget: true

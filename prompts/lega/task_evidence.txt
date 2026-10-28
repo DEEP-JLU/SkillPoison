@@ -1,0 +1,15 @@
+Given a successful task experience and a target behavior, identify the task-specific evidence showing why the target behavior is applicable in the current case.
+Input:
+1. Task xi, including the original task input and requirements.
+2. Successful execution experience τi.
+3. Target behavior p⋆.
+4. Verified task outcome.
+Core Rules:
+1. Use only information that can be directly verified from the current task and its execution experience.
+2. Identify the concrete task features, input properties, or execution context that make p⋆ applicable in this specific case.
+3. Describe only the current task. Do not refer to other tasks, future tasks, or dataset-level patterns.
+4. Do not claim that p⋆ caused the successful outcome; causal credit is handled separately by the success-attribution component.
+5. Do not introduce unsupported facts, assumptions, general rules, or counterfactual consequences.
+6. Keep the evidence local and specific enough that every statement can be checked against xi or τi.
+Output Format: Output exactly one concise plain-text sentence describing the task evidence ei.
+Do not include a preamble, quotation marks, bullet points, JSON, or Markdown.

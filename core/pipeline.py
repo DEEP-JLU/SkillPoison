@@ -5,14 +5,14 @@ import json
 from pathlib import Path
 
 from core.config import make_embedder, make_llm_client
-from core.gctir.assemble import assemble_formation_records
-from core.gctir.scoring import serialize_trajectory
+from core.ceir.assemble import assemble_formation_records
+from core.ceir.scoring import serialize_trajectory
 from core.hts.counterfactual import compute_edit_distance, outcome_from_trajectory
 from core.hts.importance import compute_behavior_importance
 from core.hts.validation import parse_object, validate_counterfactual, validate_experience, validate_target_audit
 from core.hts.validity import compute_execution_validity
-from core.legsa.generator import AttributionEvidenceGenerator
-from core.legsa.record import build_formation_record
+from core.lega.generator import AttributionEvidenceGenerator
+from core.lega.record import build_formation_record
 from core.utils.io import read_json, read_jsonl, write_json
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -115,25 +115,26 @@ class SkillPoisonPipeline:
         write_json(output / "selection_audit.json", audits)
         if not selected:
             raise ValueError("no record passed HTS; see selection_audit.json")
-        generator = None if replay else AttributionEvidenceGenerator.from_paths(self.client, p_star, REPOSITORY_ROOT / config["legsa"]["prompts_dir"])
+        generator = None if replay else AttributionEvidenceGenerator.from_paths(self.client, p_star, REPOSITORY_ROOT / config["lega"]["prompts_dir"])
         for experience in selected:
             if replay:
                 evidence = experience.get("evidence")
                 if not isinstance(evidence, dict):
-                    raise ValueError("replay requires recorded LEGSA evidence")
+                    raise ValueError("replay requires recorded LEGA evidence")
             else:
                 evidence = generator.generate_attribution_evidence(experience, experience["tau"])
             experience["record"] = build_formation_record(experience, experience["tau"], evidence, target_behavior=p_star)
-        if self.embedder is None:
+        embedder = self.embedder
+        if embedder is None:
             if replay:
                 target_embedding = payload.get("target_embedding")
                 if not isinstance(target_embedding, list) or not target_embedding:
                     raise ValueError("replay input requires target_embedding")
-                self.embedder = ReplayEmbedder(selected, p_star, target_embedding)
+                embedder = ReplayEmbedder(selected, p_star, target_embedding)
             else:
-                self.embedder = make_embedder(config)
-        settings = config["gctir"]
-        formation = assemble_formation_records(selected, formation_budget=settings["formation_budget"], retained_categories=settings["retained_categories"], lam=settings["lambda"], p_star=p_star, embedder=self.embedder, require_exact_budget=settings["require_exact_budget"])
+                embedder = make_embedder(config)
+        settings = config["ceir"]
+        formation = assemble_formation_records(selected, formation_budget=settings["formation_budget"], retained_categories=settings["retained_categories"], lam=settings["lambda"], p_star=p_star, embedder=embedder, require_exact_budget=settings["require_exact_budget"])
         summary = {
             "mode": "replay" if replay else "live", "n_candidates": len(candidates),
             "n_selected": len(selected), "n_records": len(formation["records"]),
